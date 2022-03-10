@@ -1,6 +1,7 @@
 """Building different modules for study and test their operation"""
 
 from re import S
+from gevent import config
 import music21 as m21
 import pandas as pd
 import numpy as np
@@ -27,19 +28,21 @@ import logging
 
 logging.getLogger("tensorflow").setLevel(logging.ERROR) #for avoiding annoying tf warnings
 
+import configure
+
 
 ##Data sources
-SAVE_DIR = "/Users/mauricioalfaro/Documents/mae_code/Bach/data/Jazz/encoded_dataset"
 #50 SONGS TEST PATH
-DATA_PATH = r"C:\Users\malfaro\Desktop\maeGenerator22\Jazz"
-MAPPING_JSON_NAME = "mapping_modular.json"
-SEQUENCE_LENGTH = 100
+DATA_PATH = configure.DATA_PATH
+MAPPING_JSON_NAME = configure.MAPPING_JSON_NAME
+SEQUENCE_LENGTH = configure.SEQUENCE_LENGTH
+SAVED_MODEL_NAME = configure.SAVED_MODEL_NAME
 
 #Load a midi song into a m21 list of elements
 
 def multiple_song_extractor(data_path):
     """Extract all the  midi  files from a folder
-    and save them in a single m21 object
+    and save them into a single m21 object
     args: 
     data_path: songs path 
     output: all_song(list): list with all the songs stacked together"""
@@ -239,17 +242,14 @@ def create_data_sequences(mapped_song):
     return input_data , input_data_final, targets
 
 
-
-
 #####TRAINING UNIT
-OUTPUT_UNITS = None #to be obtained as vocab_size variable from generate_training_sequences
-NUM_UNITS = [256] #Hidden layer units
-LOSS = "sparse_categorical_crossentropy"
-LEARNING_RATE = 0.001
-EPOCHS = 3
-BATCH_SIZE = 128
-SAVED_MODEL_NAME = "model_modular.h5"
-
+OUTPUT_UNITS = configure.OUTPUT_UNITS #to be obtained as vocab_size variable from generate_training_sequences
+NUM_UNITS = configure.NUM_UNITS#Hidden layer units
+LOSS = configure.LOSS
+LEARNING_RATE = configure.LEARNING_RATE
+EPOCHS = configure.EPOCHS
+BATCH_SIZE = configure.BATCH_SIZE
+SAVED_MODEL_NAME = configure.SAVED_MODEL_NAME
 
 
 def train_model(model, inputs, targets, model_name = SAVED_MODEL_NAME,
@@ -413,23 +413,18 @@ def convert_to_midi(predicted_sequence):
 
 
 if __name__ == "__main__":
-    print("Running...")
+    print("Extracting and converting the midi songs into m21 objects...")
     notes = multiple_song_extractor(DATA_PATH)
+    print("List of all converted songs created")
     all_keys_vocabulary = list(set(notes)) #lista de todos los elementos
-    #notes = song_extractor()
     print("List length:", len(notes))
-
-    print(notes[:20])
+    print("Sample:", notes[:20])
     mapped_song, vocab_length = mapping_data(notes)
+    print("List of all songs successfully mapped")
     print("Number of target classes :", len(set(mapped_song)))
     X, X_f, y = create_data_sequences(mapped_song)
-
     with open("training_data.pkl", "wb") as f:
         pkl.dump([X, X_f, y, vocab_length, all_keys_vocabulary], f)
-    # model = build_the_model(X_f, vocab_length)
-    # model = train_model(model, inputs = X_f, targets = y, model_name = SAVED_MODEL_NAME,batch_size = BATCH_SIZE, epochs = EPOCHS)
-    #prediction = generate_notes(X, SAVED_MODEL_NAME, list(set(notes)), vocab_length, 0.9)
-    #convert_to_midi(prediction)
-    print("Done!")
+    print("Taining data generated")
 
   
